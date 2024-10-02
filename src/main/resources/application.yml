@@ -11,4 +11,19 @@ spring:
         format_sql: true
 
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: travelly7@gmail.com
+    password: jccs donl wbew kace
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000

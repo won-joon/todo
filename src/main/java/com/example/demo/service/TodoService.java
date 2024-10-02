@@ -6,10 +6,18 @@ import com.example.demo.dto.TodosDto;
 import com.example.demo.repository.TodoRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.security.SecureRandom;
 import java.util.List;
 
 @Service
@@ -17,22 +25,14 @@ import java.util.List;
 public class TodoService {
 
     private final TodoRepository todoRepository;
+    private final JavaMailSender javaMailSender;
 
-    private List<Todo> loadTodosFromJson() throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        File file = new File("src/main/resources/data.json");
-        return objectMapper.readValue(file, new TypeReference<List<Todo>>() {});
-    }
+    public TodosDto getTodos(int page, int size) {
 
-    public TodosDto getTodos(int page, int size) throws IOException {
-        List<Todo> todos = loadTodosFromJson();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Todo> todoPage = todoRepository.findAll(pageable);
 
-        int start = page * size;
-        int end = Math.min((start + size), todos.size());
-
-        List<Todo> pageContent = todos.subList(start, end);
-
-        List<TodoDto> todoDtos = pageContent.stream().map(todo -> {
+        List<TodoDto> todoDtos = todoPage.getContent().stream().map(todo -> {
             TodoDto todoDto = new TodoDto();
             todoDto.setId(todo.getId());
             todoDto.setContent(todo.getTitle());
@@ -40,25 +40,39 @@ public class TodoService {
             return todoDto;
         }).toList();
 
-        TodosDto response = new TodosDto();
-        response.setCurrentPageNumber(page);
-        response.setSize(size);
-        response.setHasNext(end < todos.size());
-        response.setTodos(todoDtos);
+        TodosDto todosDto = new TodosDto();
+        todosDto.setCurrentPageNumber(page);
+        todosDto.setSize(size);
+        todosDto.setHasNext(todoPage.hasNext());
+        todosDto.setTodos(todoDtos);
 
-        return response;
+        return todosDto;
     }
 
-    public void saveData(){
-        // JSON 파일에서 데이터 로드
-        List<Todo> todos = null;
+    private String generateCode() {
+        // 임시 코드 생성 로직 (6자리 랜덤 문자열)
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder tempCode = new StringBuilder();
+        for (int i = 0; i < 6; i++) {
+            tempCode.append(characters.charAt(random.nextInt(characters.length())));
+        }
+        System.out.println("임시 코드 : " + tempCode.toString());
+        return tempCode.toString();
+    }
+
+    public void getEmailAuth(String email) {
+        String tempCode = generateCode();
+
+        MimeMessage message = javaMailSender.createMimeMessage();
         try {
-            todos = loadTodosFromJson();
-        } catch (IOException e) {
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(email);
+            helper.setSubject("이메일 인증 안내");
+            helper.setText("<p>안녕하세요,</p><p>임시 코드는 다음과 같습니다: <strong>" + tempCode + "</strong></p><p>로그인 후 비밀번호를 변경해 주세요.</p>", true);
+            javaMailSender.send(message);
+        } catch (MessagingException e) {
             throw new RuntimeException(e);
         }
-
-        // 데이터를 DB에 저장
-        todoRepository.saveAll(todos);
     }
 }

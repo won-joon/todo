@@ -15,14 +15,16 @@ public class TodoController {
     private final TodoService todoService;
 
     @GetMapping("/todos")
-    public ResponseEntity<TodosDto> travellerPage(@RequestParam("size") int size, @RequestParam("page") int page) throws IOException {
+    public ResponseEntity<TodosDto> travellerPage(@RequestParam("size") int size, @RequestParam("page") int page) {
 
         return ResponseEntity.ok(todoService.getTodos(page, size));
     }
 
-    @GetMapping("/data")
-    public void saveData(){
-        todoService.saveData();
+    @GetMapping("/email")
+    public void emailAuth(){
+        todoService.getEmailAuth("wes819@naver.com");
+
+        return;
     }
 
 }
