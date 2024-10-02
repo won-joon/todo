@@ -8,8 +8,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class TodoDto {
-
-    private int id;
+    private Long id;
     private String content;
     private boolean completed;
 }

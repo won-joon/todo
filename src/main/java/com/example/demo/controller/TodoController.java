@@ -20,4 +20,9 @@ public class TodoController {
         return ResponseEntity.ok(todoService.getTodos(page, size));
     }
 
+    @GetMapping("/data")
+    public void saveData(){
+        todoService.saveData();
+    }
+
 }

@@ -3,15 +3,20 @@ package com.example.demo.service;
 import com.example.demo.domain.Todo;
 import com.example.demo.dto.TodoDto;
 import com.example.demo.dto.TodosDto;
+import com.example.demo.repository.TodoRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class TodoService {
+
+    private final TodoRepository todoRepository;
 
     private List<Todo> loadTodosFromJson() throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -44,4 +49,16 @@ public class TodoService {
         return response;
     }
 
+    public void saveData(){
+        // JSON 파일에서 데이터 로드
+        List<Todo> todos = null;
+        try {
+            todos = loadTodosFromJson();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // 데이터를 DB에 저장
+        todoRepository.saveAll(todos);
+    }
 }
