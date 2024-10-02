@@ -31,6 +31,7 @@ public class TodoController {
 
     @PostMapping("/authentication")
     public ResponseEntity<AuthResponse> authCheck(@RequestBody AuthRequest authRequest, HttpServletRequest request){
+
         return ResponseEntity.ok().body(todoService.checkCode(authRequest.getAuthentication(), request));
     }
 }
