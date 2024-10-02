@@ -3,11 +3,13 @@ package com.example.demo.service;
 import com.example.demo.domain.Todo;
 import com.example.demo.dto.TodoDto;
 import com.example.demo.dto.TodosDto;
+import com.example.demo.dto.response.AuthResponse;
+import com.example.demo.dto.response.EmailResponse;
 import com.example.demo.repository.TodoRepository;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,7 +18,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
 import java.security.SecureRandom;
 import java.util.List;
 
@@ -61,18 +62,36 @@ public class TodoService {
         return tempCode.toString();
     }
 
-    public void getEmailAuth(String email) {
-        String tempCode = generateCode();
+    public EmailResponse getEmailAuth(String email, HttpServletRequest request) {
+        String authCode = generateCode();
 
         MimeMessage message = javaMailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(email);
             helper.setSubject("이메일 인증 안내");
-            helper.setText("<p>안녕하세요,</p><p>임시 코드는 다음과 같습니다: <strong>" + tempCode + "</strong></p><p>로그인 후 비밀번호를 변경해 주세요.</p>", true);
+            helper.setText("<p>안녕하세요,</p><p>임시 코드는 다음과 같습니다: <strong>" + authCode + "</strong></p><p> 로 인증을 완료해주세요.</p>", true);
             javaMailSender.send(message);
         } catch (MessagingException e) {
             throw new RuntimeException(e);
+        }
+
+        HttpSession httpSession = request.getSession();
+        httpSession.setAttribute("authCode", authCode);
+
+        return new EmailResponse(true);
+    }
+
+    public AuthResponse checkCode(String code, HttpServletRequest request) {
+        HttpSession session = request.getSession();
+
+        // 세션에서 인증 코드 조회
+        String storedCode = (String) session.getAttribute("authCode");
+
+        if(code.equals(storedCode)){
+            return new AuthResponse(true);
+        }else{
+            return new AuthResponse(false);
         }
     }
 }

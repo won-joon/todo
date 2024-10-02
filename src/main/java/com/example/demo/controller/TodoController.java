@@ -1,12 +1,15 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.TodosDto;
+import com.example.demo.dto.request.AuthRequest;
+import com.example.demo.dto.request.EmailRequest;
+import com.example.demo.dto.response.AuthResponse;
+import com.example.demo.dto.response.EmailResponse;
 import com.example.demo.service.TodoService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,11 +23,14 @@ public class TodoController {
         return ResponseEntity.ok(todoService.getTodos(page, size));
     }
 
-    @GetMapping("/email")
-    public void emailAuth(){
-        todoService.getEmailAuth("wes819@naver.com");
+    @PostMapping("/email")
+    public ResponseEntity<EmailResponse> emailAuth(@RequestBody EmailRequest emailRequest, HttpServletRequest request){
 
-        return;
+        return ResponseEntity.ok().body(todoService.getEmailAuth(emailRequest.getEmail(), request));
     }
 
+    @PostMapping("/authentication")
+    public ResponseEntity<AuthResponse> authCheck(@RequestBody AuthRequest authRequest, HttpServletRequest request){
+        return ResponseEntity.ok().body(todoService.checkCode(authRequest.getAuthentication(), request));
+    }
 }
